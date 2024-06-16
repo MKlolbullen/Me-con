@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo apt install waybackpy
+
 # Download Go package
 echo "Downloading Go..."
 curl -O https://dl.google.com/go/go1.21.linux-amd64.tar.gz
