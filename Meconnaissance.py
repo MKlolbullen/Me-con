@@ -1,7 +1,6 @@
 import os
 import subprocess
 import requests
-import time
 import argparse
 from threading import Thread, Lock
 
@@ -23,14 +22,14 @@ def run_command(command, args, output_file, lock):
     except subprocess.CalledProcessError as e:
         print(f"Error running {command}: {e.output.decode('utf-8')}")
 
-def check_and_install_tool(tool_name):
+def check_and_install_tool(tool_name, install_cmd):
     try:
         subprocess.check_call(['which', tool_name])
         print(f"{tool_name} is already installed.")
     except subprocess.CalledProcessError:
         print(f"{tool_name} is not installed. Installing...")
         try:
-            subprocess.check_call(['pdtm', 'add', tool_name])
+            subprocess.check_call(install_cmd)
             print(f"{tool_name} installed successfully.")
         except subprocess.CalledProcessError as e:
             print(f"Error installing {tool_name}: {e.output.decode('utf-8')}")
@@ -56,17 +55,39 @@ def main():
     parser.add_argument("domain", help="Domain to scan")
     parser.add_argument("--threads", type=int, default=5, help="Number of threads to use")
     parser.add_argument("--order", nargs='+', choices=['assetfinder', 'subfinder', 'dnsx', 'shuffledns', 'httpx', 'httprobe'], help="Order of tool execution")
-    
+    parser.add_argument("-h", "--help", action='store_true', help="Show this help message and exit")
+    parser.add_argument("-?", action='store_true', help="Show this help message and exit")
+
     args = parser.parse_args()
     
-    tools = [
-        "assetfinder", "subfinder", "dnsx", "shuffledns", "httpx", "httprobe",
-        "alterx", "gau", "naabu", "altdns", "goaltdns", "gotator",
-        "ripgen", "dnsgen", "dmut", "permdns", "str-replace", "dnscewl", "regulator"
-    ]
+    if args.help or args._:
+        parser.print_help()
+        return
 
-    for tool in tools:
-        check_and_install_tool(tool)
+    tools = {
+        "assetfinder": ["pdtm", "add", "assetfinder"],
+        "subfinder": ["pdtm", "add", "subfinder"],
+        "dnsx": ["pdtm", "add", "dnsx"],
+        "shuffledns": ["pdtm", "add", "shuffledns"],
+        "httpx": ["pdtm", "add", "httpx"],
+        "httprobe": ["pdtm", "add", "httprobe"],
+        "alterx": ["go", "install", "github.com/projectdiscovery/alterx/cmd/alterx@latest"],
+        "gau": ["go", "install", "github.com/lc/gau/v2/cmd/gau@latest"],
+        "naabu": ["pdtm", "add", "naabu"],
+        "altdns": ["pipx", "install", "altdns"],
+        "goaltdns": ["go", "install", "github.com/subfinder/goaltdns@latest"],
+        "gotator": ["go", "install", "github.com/Josue87/gotator@latest"],
+        "ripgen": ["pipx", "install", "ripgen"],
+        "dnsgen": ["pipx", "install", "dnsgen"],
+        "dmut": ["pipx", "install", "dmut"],
+        "permdns": ["go", "install", "github.com/projectdiscovery/permdns/cmd/permdns@latest"],
+        "str-replace": ["pipx", "install", "str-replace"],
+        "dnscewl": ["pipx", "install", "dnscewl"],
+        "regulator": ["go", "install", "github.com/projectdiscovery/regulator/cmd/regulator@latest"]
+    }
+
+    for tool, install_cmd in tools.items():
+        check_and_install_tool(tool, install_cmd)
 
     subprocess.check_call(['python3', '-m', 'pip', 'uninstall', 'autorecon', '-y'])
     subprocess.check_call(['python3', '-m', 'pip', 'install', 'git+https://github.com/Tib3rius/AutoRecon.git'])
@@ -148,7 +169,7 @@ def main():
         {"name": "dmut", "args": ["-d", shuffledns_file], "output": os.path.join(domain_dir, "dmut.txt")},
         {"name": "permdns", "args": ["-d", shuffledns_file], "output": os.path.join(domain_dir, "permdns.txt")},
         {"name": "str-replace", "args": ["-l", shuffledns_file], "output": os.path.join(domain_dir, "str-replace.txt")},
-{"name": "dnscewl", "args": ["-d", shuffledns_file], "output": os.path.join(domain_dir, "dnscewl.txt")},
+        {"name": "dnscewl", "args": ["-d", shuffledns_file], "output": os.path.join(domain_dir, "dnscewl.txt")},
         {"name": "regulator", "args": ["-d", shuffledns_file], "output": os.path.join(domain_dir, "regulator.txt")},
     ]
 
